@@ -40,5 +40,14 @@ cafenames=["einsteins", "frans", "lisas", "express"]
 
 for hn in hallnames:
 	resp=str(scrapeapage(True, hn))
-	presp=parseresponse(resp)
-	print presp
+	presp=parseresponse(resp) #List of sentences like: ['Monday - Friday: 11:00 a.m. - 7:00 p.m.', 'Saturday - Sunday: Closed']
+	for s in presp:
+		print s
+		dayreg=re.compile(r'[A-Z,a-z]{3,5}day')
+		days=dayreg.findall(s) #got a list of the days
+		# print "days"
+		# print days
+		timereg=re.compile(r'\d{1,2}:\d{1,2}\s[a,p].m.')
+		time=timereg.findall(s) #got a list of times
+		# print "time"
+		# print time
