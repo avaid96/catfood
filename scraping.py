@@ -49,5 +49,6 @@ for hn in hallnames:
 		# print days
 		timereg=re.compile(r'\d{1,2}:\d{1,2}\s[a,p].m.')
 		time=timereg.findall(s) #got a list of times
+		print "NOTE: NEED TO DEAL WITH THE \"Closed\" TIME"
 		# print "time"
 		# print time
