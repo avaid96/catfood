@@ -18,21 +18,27 @@ def scrapeapage(isdininghall, hallname):
 	return response
 	
 def parseresponse(resp): 
-	hoursreg=re.compile(r'<p>\n.*</p>',re.DOTALL)
+	hoursreg=re.compile(r'<p>.*<\/p>',re.DOTALL)
 	hours=hoursreg.search(resp)
-	print hours.group()
+	hours=hours.group()
+	# found the paragraph with hours using regex
+	hours=hours.split('<p>')[2].split('\n')[1:3]
+	# split hours on new lines
+	for i,j in enumerate(hours): 
+		bropen=0
+		for a,b in enumerate(j):
+			if b=='<':
+				bropen=a
+		hours[i]=hours[i][0:bropen]
+	# #removed line breaks
+	return hours
 
+# def fromnaturallang(resp):
 
 hallnames=["1835-hinman", "allison", "foster-walker", "elder", "sargent", "sargent", "willard"]
 cafenames=["einsteins", "frans", "lisas", "express"]
 
-respo="""<div class="accordionBody">
-<p>Week of: 04/04/2016 - 04/10/2016</p>
-<p style="text-decoration:underline;">Allison Standard Hours</p>
-<p>
-Monday - Friday: 7:30 a.m. - 7:00 p.m.<br/>
-Saturday - Sunday: 11:00 a.m. - 7:00 p.m.<br/>
-</p>
-</div>"""
-parseresponse(respo)
-
+for hn in hallnames:
+	resp=str(scrapeapage(True, hn))
+	presp=parseresponse(resp)
+	print presp
