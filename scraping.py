@@ -3,6 +3,7 @@ import csv
 import webbrowser
 import urllib
 import re
+import json
 
 def scrapeapage(isdininghall, hallname):
 	opener=urllib.FancyURLopener({})
@@ -46,7 +47,7 @@ def gethallrawtime():
 	"""returns a list of lists of all hall times where a hall time is in format:
 	[hallname,1setofdays,2setofdays(optional),...] where set of days is a list in format:
 	[[startday,endday(optional)],[starttime(secs),endtime(secs)]]"""
-	hallnames=["1835-hinman", "allison", "foster-walker", "elder", "sargent", "sargent", "willard"]
+	hallnames=["1835-hinman", "allison", "foster-walker", "elder", "sargent", "willard"]
 	cafenames=["einsteins", "frans", "lisas", "express"]
 	daydict={'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6,'Sunday':0}
 	allhalls=[]
@@ -84,7 +85,43 @@ def gethallrawtime():
 
 def tojson(allhalls):
 	"""a function that will take in a list as returned by gethallrawtime() and create a json"""
-	print "to be implemented..."
+	# allhalls=[1hall,2hall,...]
+	# 1hall=[hallname,1setofdays,2setofdays(optional),...]
+	mdict=dict()
+	for i in range(0,7):
+		mdict[i]={}
+	print mdict
+	for hn in allhalls:
+		#now we have 1 hall where hn[0] is hallname and then we have setofdays
+		print hn[0]
+		for setdays in hn[1:]:
+			#now we have [[startday,endday(optional)],[starttime(secs),endtime(secs)]]
+			print setdays
+			days=setdays[0]
+			times=setdays[1]
+			if len(days)==1:
+				mdict[days[0]].setdefault(hn[0],[])
+				mdict[days[0]][hn[0]].append(times)
+			else:
+				if days[1]>days[0]:
+					for d in range(days[0],days[1]+1,1):
+						mdict[d].setdefault(hn[0],[])
+						mdict[d][hn[0]].append(times)
+				else:
+					for d in range(days[0],days[1]-1,-1):
+						mdict[d].setdefault(hn[0],[])
+						mdict[d][hn[0]].append(times)
+			if len(days)==3:
+				mdict[days[2]].setdefault(hn[0],[])
+				mdict[days[2]][hn[0]].append(times)
+	print mdict
+	jsonfile=open("times.json",'w')
+	json.dump(mdict,jsonfile,indent=2)
+	jsonfile.close()
+	print "File ready..."
+
+
+
 
 
 
