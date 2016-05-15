@@ -10,7 +10,7 @@ def scrapeapage(isdininghall, hallname):
 	if isdininghall:
 		url="https://northwestern.sodexomyway.com/dining-choices/resident/"+hallname+".html"
 	else: 
-		url="https://northwestern.sodexomyway.com/dining-choices/retail/"+cafename+".html"
+		url="https://northwestern.sodexomyway.com/dining-choices/retail/"+hallname+".html"
 	openerFile = opener.open(url)
 	htmlFile = openerFile.read()
 	soup = BeautifulSoup(htmlFile,"html.parser")
@@ -34,21 +34,21 @@ def parseresponse(resp):
 	# #removed line breaks
 	return hours
 
-def hrstosecs(hrs):
+def hrstomins(hrs):
 	hour=hrs.split(':')[0]
 	mins=hrs.split(':')[1].split(' ')[0]
 	amorpm=hrs.split(' ')[1].split('.')[0]
-	secs=int(hour)*3600+int(mins)*60
+	result=int(hour)*60+int(mins)
 	if amorpm=='p':
-		secs+=43200
-	return int(secs)
+		result+=720
+	return int(result)
 
 def gethallrawtime():
 	"""returns a list of lists of all hall times where a hall time is in format:
 	[hallname,1setofdays,2setofdays(optional),...] where set of days is a list in format:
 	[[startday,endday(optional)],[starttime(secs),endtime(secs)]]"""
 	hallnames=["1835-hinman", "allison", "foster-walker", "elder", "sargent", "willard"]
-	cafenames=["einsteins", "frans", "lisas", "express"]
+	cafenames=["einsteins", "lisas", "express"]
 	daydict={'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6,'Sunday':0}
 	allhalls=[]
 	for hn in hallnames:
@@ -73,13 +73,43 @@ def gethallrawtime():
 			if time==[]:
 				time=[0,0]
 			else:
-				start=hrstosecs(time[0])
-				end=hrstosecs(time[1])
+				start=hrstomins(time[0])
+				end=hrstomins(time[1])
 				time=[start,end]
 			print time
 			sentence.append(time)
 			halldeets.append(sentence)
 		allhalls.append(halldeets)
+		print "-------------"
+	for cn in cafenames:
+		cafedeets=[]
+		resp=str(scrapeapage(False, cn))
+		print cn
+		cafedeets.append(cn)
+		presp=parseresponse(resp) #List of sentences like: ['Monday - Friday: 11:00 a.m. - 7:00 p.m.', 'Saturday - Sunday: Closed']
+		for s in presp:
+			sentence=[]
+			dayreg=re.compile(r'[A-Z,a-z]{3,5}day')
+			days=dayreg.findall(s) #got a list of the days
+			print "days"
+			print days
+			for iday in range(len(days)):
+				days[iday]=daydict.get(days[iday],False)
+			sentence.append(days)
+			timereg=re.compile(r'\d{1,2}:\d{1,2}\s[a,p].m.')
+			time=timereg.findall(s) #got a list of times
+			print "time"
+			print time
+			if time==[]:
+				time=[0,0]
+			else:
+				start=hrstomins(time[0])
+				end=hrstomins(time[1])
+				time=[start,end]
+			print time
+			sentence.append(time)
+			cafedeets.append(sentence)
+		allhalls.append(cafedeets)
 		print "-------------"
 	return allhalls
 
@@ -114,6 +144,7 @@ def tojson(allhalls):
 			if len(days)==3:
 				mdict[days[2]].setdefault(hn[0],[])
 				mdict[days[2]][hn[0]].append(times)
+
 	print mdict
 	jsonfile=open("times.json",'w')
 	json.dump(mdict,jsonfile,indent=2)
